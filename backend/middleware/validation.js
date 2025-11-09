@@ -60,6 +60,10 @@ const registerValidation = [
     .toLowerCase()
     .isIn(['admin', 'manager', 'user'])
     .withMessage('Role must be admin, manager, or user'),
+  body('token')
+    .optional()  // Token for admin-created user completion
+    .isLength({ min: 64, max: 64 })
+    .withMessage('Invalid token format'),
   handleValidationErrors  // Must be last - handles validation results
 ];
 

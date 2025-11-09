@@ -37,8 +37,14 @@ VITE_API_URL=http://localhost:3000/api
 - React Router for navigation
 - Context API for state management
 - Axios for API calls
+- Cookie-based authentication
+- Real-time notifications via Server-Sent Events
+- Email verification flow
 - Responsive design
 - Role-based UI components
+- Task management with filters and pagination
+- User management (admin only)
+- Notification menu with unread count
 
 
 

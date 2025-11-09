@@ -1,13 +1,19 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import './Auth.css'
 
 const Register = () => {
+  const [searchParams] = useSearchParams()
+  const token = searchParams.get('token')
+  const emailParam = searchParams.get('email')
+  const isAdminCreated = !!token
+
   const [formData, setFormData] = useState({
     username: '',
-    email: '',
+    email: emailParam || '',
     password: '',
+    confirmPassword: '',
     role: 'user'
   })
   const [error, setError] = useState('')
@@ -15,23 +21,47 @@ const Register = () => {
   const { register } = useAuth()
   const navigate = useNavigate()
 
+  useEffect(() => {
+    if (isAdminCreated && emailParam) {
+      // Pre-fill email for admin-created users
+      setFormData(prev => ({ ...prev, email: emailParam }))
+    }
+  }, [isAdminCreated, emailParam])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters')
+      return
+    }
+
     setLoading(true)
 
-    // Normalize role to lowercase
     const submitData = {
       ...formData,
-      role: formData.role.toLowerCase()
+      role: formData.role.toLowerCase(),
+      token: isAdminCreated ? token : undefined
     }
+
+    // Remove confirmPassword before sending
+    delete submitData.confirmPassword
 
     const result = await register(submitData)
     
     if (result.success) {
       navigate('/login', { 
         state: { 
-          message: 'Registration successful! Please check your email to verify your account before logging in.' 
+          message: isAdminCreated 
+            ? 'Account registration completed successfully! You can now log in.' 
+            : 'Registration successful! Please check your email to verify your account before logging in.' 
         } 
       })
     } else {
@@ -44,20 +74,23 @@ const Register = () => {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1>Register</h1>
-        <p className="auth-subtitle">Create a new account to get started.</p>
+        <h1>{isAdminCreated ? 'Complete Your Registration' : 'Register'}</h1>
+        <p className="auth-subtitle">
+          {isAdminCreated 
+            ? 'An account has been created for you. Please set your password to complete registration and start working.'
+            : 'Create a new account to get started.'}
+        </p>
         
         {error && <div className="error-message">{error}</div>}
         
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="username">Username *</label>
             <input
               type="text"
               id="username"
               value={formData.username}
               onChange={(e) => {
-                // Remove spaces and special characters (except underscore)
                 const value = e.target.value.replace(/[^a-zA-Z0-9_]/g, '');
                 setFormData({ ...formData, username: value });
               }}
@@ -67,6 +100,7 @@ const Register = () => {
               placeholder="Choose a username (letters, numbers, _ only)"
               pattern="[a-zA-Z0-9_]+"
               title="Username can only contain letters, numbers, and underscores"
+              disabled={loading}
             />
             <small style={{ color: '#666', fontSize: '0.85rem', display: 'block', marginTop: '0.25rem' }}>
               Only letters, numbers, and underscores allowed (no spaces)
@@ -74,7 +108,7 @@ const Register = () => {
           </div>
           
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">Email *</label>
             <input
               type="email"
               id="email"
@@ -82,11 +116,18 @@ const Register = () => {
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
               placeholder="Enter your email"
+              disabled={isAdminCreated || loading}
+              style={isAdminCreated ? { background: 'var(--light)', cursor: 'not-allowed' } : {}}
             />
+            {isAdminCreated && (
+              <small style={{ color: '#666', fontSize: '0.85rem', display: 'block', marginTop: '0.25rem' }}>
+                This email was used to create your account
+              </small>
+            )}
           </div>
           
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">Password *</label>
             <input
               type="password"
               id="password"
@@ -95,29 +136,51 @@ const Register = () => {
               required
               minLength={6}
               placeholder="Create a password (min 6 characters)"
+              disabled={loading}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="confirmPassword">Confirm Password *</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+              required
+              minLength={6}
+              placeholder="Confirm your password"
+              disabled={loading}
             />
           </div>
           
-          <div className="form-group">
-            <label htmlFor="role">Role</label>
-            <select
-              id="role"
-              value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-            >
-              <option value="user">User</option>
-              <option value="manager">Manager</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
+          {!isAdminCreated && (
+            <div className="form-group">
+              <label htmlFor="role">Role</label>
+              <select
+                id="role"
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                disabled={loading}
+              >
+                <option value="user">User</option>
+                <option value="manager">Manager</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          )}
           
           <button type="submit" className="submit-btn" disabled={loading}>
-            {loading ? 'Registering...' : 'Register'}
+            {loading ? (isAdminCreated ? 'Completing Registration...' : 'Registering...') : (isAdminCreated ? 'Complete Registration & Start Working' : 'Register')}
           </button>
         </form>
         
         <p className="auth-footer">
-          Already have an account? <Link to="/login">Login here</Link>
+          {!isAdminCreated && (
+            <>
+              Already have an account? <Link to="/login">Login here</Link>
+            </>
+          )}
         </p>
       </div>
     </div>
@@ -125,5 +188,3 @@ const Register = () => {
 }
 
 export default Register
-
-

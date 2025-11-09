@@ -10,6 +10,7 @@ const UserModal = ({ user, onClose }) => {
     role: 'user'
   })
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
   const [isEditingRole, setIsEditingRole] = useState(false)
 
@@ -28,22 +29,33 @@ const UserModal = ({ user, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setSuccess('')
     setLoading(true)
 
     try {
       if (isEditingRole) {
         // Update user role only
         await usersAPI.updateRole(user.id, formData.role)
+        onClose()
       } else {
         // Create new user
         const submitData = { ...formData }
         if (!submitData.password) {
           throw new Error('Password is required')
         }
-        await usersAPI.create(submitData)
+        const response = await usersAPI.create(submitData)
+        
+        // Show success message if email was sent
+        if (response.data.emailSent) {
+          setSuccess('User created successfully! Verification email has been sent to the user.')
+          // Close modal after 3 seconds
+          setTimeout(() => {
+            onClose()
+          }, 3000)
+        } else {
+          onClose()
+        }
       }
-      
-      onClose()
     } catch (error) {
       setError(error.response?.data?.error || error.message || 'Failed to save user')
     } finally {
@@ -60,6 +72,7 @@ const UserModal = ({ user, onClose }) => {
         </div>
 
         {error && <div className="error-message">{error}</div>}
+        {success && <div className="success-message">{success}</div>}
 
         <form onSubmit={handleSubmit}>
           {isEditingRole ? (
@@ -123,15 +136,18 @@ const UserModal = ({ user, onClose }) => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="password">Password *</label>
+                <label htmlFor="password">Password</label>
                 <input
                   type="password"
                   id="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  required
                   minLength={6}
+                  placeholder="Leave empty for auto-generated password"
                 />
+                <small style={{ color: 'var(--gray)', fontSize: '0.85rem', display: 'block', marginTop: '0.25rem' }}>
+                  Optional: Leave empty and a random 6-character password will be generated and sent via email
+                </small>
               </div>
 
               <div className="form-group">

@@ -32,8 +32,19 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, 'Password is required'],
+    required: function() {
+      // Password is required only if not an admin-created user (has no temp password flag)
+      return !this.isAdminCreated;
+    },
     minlength: [6, 'Password must be at least 6 characters']
+  },
+  isAdminCreated: {
+    type: Boolean,
+    default: false
+  },
+  requiresPasswordSetup: {
+    type: Boolean,
+    default: false
   },
   role: {
     type: String,
@@ -60,8 +71,8 @@ const userSchema = new mongoose.Schema({
 
 // Hash password before saving (pre-save hook)
 userSchema.pre('save', async function(next) {
-  // Only hash password if it's been modified (or is new)
-  if (!this.isModified('password')) {
+  // Only hash password if it's been modified (or is new) and exists
+  if (!this.isModified('password') || !this.password) {
     return next();
   }
   
@@ -69,6 +80,10 @@ userSchema.pre('save', async function(next) {
     // Hash password with bcrypt (10 rounds)
     const hashedPassword = await bcrypt.hash(this.password, 10);
     this.password = hashedPassword;
+    // Clear requiresPasswordSetup flag when password is set
+    if (this.requiresPasswordSetup && this.password) {
+      this.requiresPasswordSetup = false;
+    }
     next();
   } catch (error) {
     next(error);

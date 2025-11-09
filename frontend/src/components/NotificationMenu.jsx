@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { notificationsAPI } from '../services/api'
 import { format } from 'date-fns'
+import { getCookie } from '../utils/cookies'
 import './NotificationMenu.css'
 
 const NotificationMenu = () => {
@@ -35,7 +36,7 @@ const NotificationMenu = () => {
   }, [])
 
   const setupSSE = () => {
-    const token = localStorage.getItem('token')
+    const token = getCookie('token')
     if (!token) return
 
     // EventSource doesn't support custom headers, so we'll use query parameter

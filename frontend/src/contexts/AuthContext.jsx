@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { authAPI } from '../services/api'
+import { setCookie, getCookie, deleteCookie } from '../utils/cookies'
 
 const AuthContext = createContext(null)
 
@@ -16,15 +17,15 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user')
-    const token = localStorage.getItem('token')
+    const storedUser = getCookie('user')
+    const token = getCookie('token')
     
     if (storedUser && token) {
       try {
-        setUser(JSON.parse(storedUser))
+        setUser(JSON.parse(decodeURIComponent(storedUser)))
       } catch (error) {
-        localStorage.removeItem('user')
-        localStorage.removeItem('token')
+        deleteCookie('user')
+        deleteCookie('token')
       }
     }
     setLoading(false)
@@ -35,8 +36,9 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.login({ username, password })
       const { token, user } = response.data
       
-      localStorage.setItem('token', token)
-      localStorage.setItem('user', JSON.stringify(user))
+      // Store token and user in cookies (7 days expiration)
+      setCookie('token', token, 7)
+      setCookie('user', encodeURIComponent(JSON.stringify(user)), 7)
       setUser(user)
       
       return { success: true }
@@ -52,12 +54,18 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       // Normalize role to lowercase before sending
-      const normalizedData = {
-        ...userData,
-        role: userData.role ? userData.role.toLowerCase() : 'user'
-      }
-      const response = await authAPI.register(normalizedData)
-      return { success: true, data: response.data }
+        const normalizedData = {
+          ...userData,
+          role: userData.role ? userData.role.toLowerCase() : 'user'
+        }
+        // Remove undefined fields
+        Object.keys(normalizedData).forEach(key => {
+          if (normalizedData[key] === undefined) {
+            delete normalizedData[key]
+          }
+        })
+        const response = await authAPI.register(normalizedData)
+        return { success: true, data: response.data }
     } catch (error) {
       return {
         success: false,
@@ -72,8 +80,8 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
+      deleteCookie('token')
+      deleteCookie('user')
       setUser(null)
     }
   }

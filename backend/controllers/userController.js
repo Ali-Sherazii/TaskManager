@@ -4,10 +4,16 @@
  * Handles user management operations using MongoDB/Mongoose.
  */
 
+const crypto = require('crypto');
 const User = require('../models/User');
+const config = require('../config/config');
+const { sendAdminCreatedUserEmail } = require('../services/emailService');
 
 /**
  * Create User
+ * 
+ * Creates a new user and sends verification email.
+ * When admin creates a user, the user must verify their email before logging in.
  */
 const createUser = async (req, res) => {
   try {
@@ -22,15 +28,50 @@ const createUser = async (req, res) => {
       return res.status(400).json({ error: 'Username or email already exists' });
     }
 
-    // Create user (password will be hashed by pre-save hook)
+    // Generate random 6-character password for admin-created user
+    const generateRandomPassword = (length = 6) => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let password = '';
+      for (let i = 0; i < length; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return password;
+    };
+
+    const generatedPassword = generateRandomPassword(6);
+
+    // Generate email verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpires = new Date();
+    verificationExpires.setHours(verificationExpires.getHours() + config.emailVerification.tokenExpirationHours);
+
+    // Create user with generated password (password will be hashed by pre-save hook)
     const user = new User({
       username,
       email,
-      password,
-      role
+      password: generatedPassword,
+      role,
+      isEmailVerified: true, // Auto-verify admin-created users
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
+      isAdminCreated: true,
+      requiresPasswordSetup: false
     });
 
     await user.save();
+
+    // Send admin-created user email with credentials (don't wait for it to complete)
+    sendAdminCreatedUserEmail(user.email, user.username, generatedPassword)
+      .then(result => {
+        if (result.success) {
+          console.log(`Activation email sent to ${user.email} for admin-created user`);
+        } else {
+          console.error(`Failed to send activation email to ${user.email}:`, result.error);
+        }
+      })
+      .catch(error => {
+        console.error(`Error sending activation email to ${user.email}:`, error);
+      });
 
     // Format user with id field
     const formattedUser = {
@@ -39,8 +80,9 @@ const createUser = async (req, res) => {
     };
 
     res.status(201).json({
-      message: 'User created successfully',
-      user: formattedUser
+      message: 'User created successfully. Login credentials have been sent to the user via email.',
+      user: formattedUser,
+      emailSent: true
     });
   } catch (error) {
     console.error('Create user error:', error);

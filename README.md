@@ -63,6 +63,7 @@ The Task Management System is a comprehensive solution for organizing and tracki
 
 - Welcome emails upon successful registration
 - Email verification tokens for account activation
+- Admin-created user emails with auto-generated credentials
 - Task assignment notifications
 - Automated task reminders at configurable intervals
 - HTML email templates with professional styling
@@ -82,8 +83,8 @@ The Task Management System is a comprehensive solution for organizing and tracki
 - **node-cron**: Scheduled task reminders
 - **nodemailer**: Email service
 - **helmet**: Security headers
-- **express-rate-limit**: Rate limiting
 - **cors**: Cross-origin resource sharing
+- **cookie-parser**: Cookie management
 
 ### Frontend
 
@@ -93,6 +94,7 @@ The Task Management System is a comprehensive solution for organizing and tracki
 - **Axios**: HTTP client
 - **date-fns**: Date formatting
 - **Context API**: State management
+- **Cookie-based authentication**: Secure token storage
 
 ## Project Structure
 
@@ -442,10 +444,15 @@ Content-Type: application/json
 {
   "username": "newuser",
   "email": "newuser@example.com",
-  "password": "password123",
+  "password": "password123",  // Optional: if not provided, random 6-char password generated
   "role": "user"
 }
 ```
+
+**Note:** When admin creates a user:
+- If password is not provided, a random 6-character password is auto-generated
+- Email is sent to user with username and password
+- User account is auto-verified and ready for immediate login
 
 #### Update User Role
 ```
@@ -509,12 +516,21 @@ Establishes a persistent connection for real-time notification delivery.
 
 ### Email Verification Flow
 
+**Self-Registration:**
 1. User registers with email address
 2. System generates secure verification token
 3. Verification email sent to user
 4. User clicks link in email
 5. Email verified, account activated
-6. User can now log in
+6. Welcome email sent
+7. User can now log in
+
+**Admin-Created Users:**
+1. Admin creates user account (password optional)
+2. If password not provided, random 6-character password generated
+3. Email sent to user with username and password
+4. User account is auto-verified
+5. User can log in immediately with provided credentials
 
 ### JWT Token
 
@@ -524,7 +540,7 @@ All protected endpoints require a JWT token in the Authorization header:
 Authorization: Bearer <jwt-token>
 ```
 
-Tokens are stored in the database as sessions and can be revoked. Default expiration is 24 hours.
+Tokens are stored in HTTP-only cookies for enhanced security and also in the database as sessions. Sessions can be revoked. Default expiration is 24 hours.
 
 ## Role-Based Access Control
 
@@ -556,17 +572,26 @@ Tokens are stored in the database as sessions and can be revoked. Default expira
 
 ### Email Verification
 
-- Token-based email verification during registration
+- Token-based email verification during self-registration
 - Secure 64-character hexadecimal tokens
 - 24-hour token expiration (configurable)
 - Resend verification email functionality
 - Welcome email sent after successful verification
+- Admin-created users are auto-verified and receive credentials via email
 
 ### Task Assignment Emails
 
 - Automatic email notification when task is assigned
 - Includes task title, description, due date, priority, and status
 - HTML email template with professional styling
+
+### Admin-Created User Emails
+
+- Automatic email when admin creates a user account
+- Includes username and auto-generated 6-character password (if not provided by admin)
+- Clear instructions for login
+- Security note recommending password change after first login
+- Account is ready for immediate use (auto-verified)
 
 ### Task Reminder Emails
 
@@ -673,7 +698,6 @@ All sensitive configuration should be stored in `.env` files and never committed
 
 - Use HTTPS in production
 - Set strong JWT secret
-- Enable rate limiting
 - Configure CORS properly
 - Use environment variables for secrets
 - Enable Helmet security headers
@@ -685,19 +709,21 @@ All sensitive configuration should be stored in `.env` files and never committed
 ### Authentication Security
 
 - JWT tokens with configurable expiration
+- Cookie-based token storage (HTTP-only cookies)
 - Database-backed session storage
 - Session revocation capability
 - Password hashing with bcrypt (10 rounds)
-- Email verification required before login
+- Email verification required for self-registered users
+- Admin-created users auto-verified with secure password generation
 
 ### API Security
 
-- Rate limiting on all endpoints
 - Input validation and sanitization
 - XSS protection
-- CORS configuration
+- CORS configuration with credentials support
 - Security headers (Helmet)
 - Role-based authorization checks
+- Secure cookie configuration
 
 ### Data Security
 
@@ -723,9 +749,10 @@ All sensitive configuration should be stored in `.env` files and never committed
 - Verify sender email is verified (SendGrid/Mailgun)
 
 **Login Fails After Registration:**
-- Check email inbox for verification link
+- For self-registered users: Check email inbox for verification link
 - Verify email address is correct
 - Use resend verification if token expired
+- For admin-created users: Check email for username and password credentials
 
 **Notifications Not Appearing:**
 - Check SSE connection in browser console
@@ -762,5 +789,16 @@ For issues, questions, or contributions:
 
 ---
 
-**Version**: 1.0.0  
-**Last Updated**: 2024
+**Version**: 2.0.0  
+**Last Updated**: December 2024
+
+## Recent Updates
+
+### Version 2.0.0
+- Admin-created users with auto-generated passwords
+- Email credentials delivery for admin-created accounts
+- Cookie-based authentication (replaced localStorage)
+- Enhanced email verification flow
+- Real-time notifications via Server-Sent Events
+- Improved security with HTTP-only cookies
+- Auto-verification for admin-created users

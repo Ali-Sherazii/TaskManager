@@ -722,10 +722,196 @@ If you didn't register for this account, you can safely ignore this email.
   return await sendEmail({ to: email, subject, html, text });
 };
 
+/**
+ * Send Admin-Created User Email
+ * 
+ * Sends an email to a user whose account was created by an admin.
+ * This email includes their username and password for login.
+ * 
+ * @param {string} email - User email address
+ * @param {string} username - User username
+ * @param {string} password - Generated password for the user
+ * @returns {Promise} Promise that resolves when email is sent
+ */
+const sendAdminCreatedUserEmail = async (email, username, password) => {
+  const config = require('../config/config');
+  const loginUrl = `${config.emailVerification.frontendUrl}/login`;
+  
+  const subject = 'Your Account Has Been Created - Task Management System';
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Account Created</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+        .container {
+          background-color: #f9f9f9;
+          padding: 30px;
+          border-radius: 10px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+          background-color: #4CAF50;
+          color: white;
+          padding: 20px;
+          border-radius: 5px;
+          text-align: center;
+          margin-bottom: 20px;
+        }
+        .content {
+          background-color: white;
+          padding: 20px;
+          border-radius: 5px;
+        }
+        .button {
+          display: inline-block;
+          padding: 14px 28px;
+          background-color: #4CAF50;
+          color: white;
+          text-decoration: none;
+          border-radius: 5px;
+          margin: 20px 0;
+          text-align: center;
+          font-weight: bold;
+          font-size: 16px;
+        }
+        .button:hover {
+          background-color: #45a049;
+        }
+        .activation-link {
+          background-color: #f5f5f5;
+          padding: 15px;
+          border-radius: 5px;
+          margin: 15px 0;
+          word-break: break-all;
+          font-family: monospace;
+          font-size: 0.9rem;
+        }
+        .info-box {
+          background-color: #e3f2fd;
+          border-left: 4px solid #2196F3;
+          padding: 15px;
+          margin: 20px 0;
+        }
+        .footer {
+          text-align: center;
+          margin-top: 20px;
+          color: #666;
+          font-size: 12px;
+        }
+        .features {
+          background-color: #f0f0f0;
+          padding: 15px;
+          border-radius: 5px;
+          margin: 15px 0;
+        }
+        .features ul {
+          margin: 10px 0;
+          padding-left: 20px;
+        }
+        .features li {
+          margin: 8px 0;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Welcome to Task Management System!</h1>
+        </div>
+        <div class="content">
+          <p>Hello,</p>
+          
+          <p>A user account has been created for this email address (<strong>${email}</strong>) by an administrator in our Task Management System.</p>
+          
+          <div class="info-box" style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
+            <p><strong>Your Login Credentials:</strong></p>
+            <p style="margin: 10px 0;"><strong>Username:</strong> <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px; font-size: 1.1em;">${username}</code></p>
+            <p style="margin: 10px 0;"><strong>Password:</strong> <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px; font-size: 1.1em; letter-spacing: 2px;">${password}</code></p>
+            <p style="margin-top: 15px; font-size: 0.9em; color: #856404;"><strong>Important:</strong> Please save these credentials securely. We recommend changing your password after your first login.</p>
+          </div>
+          
+          <div style="text-align: center;">
+            <a href="${loginUrl}" class="button">Login & Start Working</a>
+          </div>
+          
+          <p>Or visit the login page: <a href="${loginUrl}">${loginUrl}</a></p>
+          
+          <div class="features">
+            <p><strong>Once you log in, you'll be able to:</strong></p>
+            <ul>
+              <li>View and manage your assigned tasks</li>
+              <li>Track task progress and deadlines</li>
+              <li>Receive notifications about task updates</li>
+              <li>Collaborate with your team</li>
+              <li>Stay organized and productive</li>
+            </ul>
+          </div>
+          
+          <p>If you have any questions or need assistance, please don't hesitate to contact your administrator or our support team.</p>
+          
+          <p>We're excited to have you on board!</p>
+          <p>Best regards,<br>The Task Management Team</p>
+        </div>
+        <div class="footer">
+          <p>This is an automated email. Please do not reply to this message.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+  const text = `
+Welcome to Task Management System!
+
+Hello,
+
+A user account has been created for this email address (${email}) by an administrator in our Task Management System.
+
+Your Login Credentials:
+Username: ${username}
+Password: ${password}
+
+Important: Please save these credentials securely. We recommend changing your password after your first login.
+
+To get started, please visit the login page:
+${loginUrl}
+
+Once you log in, you'll be able to:
+- View and manage your assigned tasks
+- Track task progress and deadlines
+- Receive notifications about task updates
+- Collaborate with your team
+- Stay organized and productive
+
+If you have any questions or need assistance, please don't hesitate to contact your administrator or our support team.
+
+We're excited to have you on board!
+
+Best regards,
+The Task Management Team
+
+---
+This is an automated email. Please do not reply to this message.
+  `;
+
+  return await sendEmail({ to: email, subject, html, text });
+};
+
 module.exports = {
   sendEmail,
   sendWelcomeEmail,
   sendVerificationEmail,
+  sendAdminCreatedUserEmail,
   sendTaskAssignmentEmail,
   sendTaskReminderEmail
 };

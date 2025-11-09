@@ -30,6 +30,18 @@ router.post('/verify-email', [
   handleValidationErrors
 ], authController.verifyEmail);
 
+router.post('/set-password', [
+  body('token')
+    .notEmpty()
+    .withMessage('Verification token is required')
+    .isLength({ min: 64, max: 64 })
+    .withMessage('Invalid verification token format'),
+  body('password')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters'),
+  handleValidationErrors
+], authController.setPassword);
+
 router.post('/resend-verification', [
   body('email')
     .trim()

@@ -54,6 +54,9 @@ Server runs on: `http://localhost:3000`
 - `POST /api/auth/register` - Register user
 - `POST /api/auth/login` - Login user
 - `POST /api/auth/logout` - Logout user
+- `POST /api/auth/verify-email` - Verify email address
+- `POST /api/auth/set-password` - Set password for admin-created users
+- `POST /api/auth/resend-verification` - Resend verification email
 - `POST /api/auth/revoke-session/:userId` - Revoke sessions
 
 ### Tasks
@@ -66,8 +69,13 @@ Server runs on: `http://localhost:3000`
 ### Users (Admin only)
 - `GET /api/users` - Get all users
 - `GET /api/users/:id` - Get user by ID
-- `POST /api/users` - Create user
+- `POST /api/users` - Create user (auto-generates password if not provided)
 - `PUT /api/users/:id/role` - Update user role
+
+**Admin User Creation:**
+- Password is optional - if not provided, random 6-character password generated
+- Email sent with username and password
+- User account auto-verified and ready for immediate login
 
 ## Authentication
 
@@ -98,9 +106,10 @@ For complete learning guide, see [../LEARNING_GUIDE.md](../LEARNING_GUIDE.md)
 MongoDB database: `taskmanager` (created automatically)
 
 **Collections:**
-- `users` - User accounts
+- `users` - User accounts (with email verification and admin-created flags)
 - `tasks` - Tasks
 - `sessions` - Active sessions
+- `notifications` - User notifications
 
 ## Configuration
 
