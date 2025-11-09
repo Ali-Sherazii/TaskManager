@@ -35,12 +35,17 @@ const Tasks = () => {
       const params = {}
       if (filters.status) params.status = filters.status
       if (filters.priority) params.priority = filters.priority
-      if (filters.assignedTo) params.assignedTo = filters.assignedTo
+      // Only send assignedTo if it's not empty (empty means "all users")
+      if (filters.assignedTo && filters.assignedTo.trim() !== '') {
+        params.assignedTo = filters.assignedTo
+      }
 
       const response = await tasksAPI.getAll(params)
       setTasks(response.data.tasks || [])
+      console.log('Tasks loaded:', response.data.tasks?.length || 0, 'tasks')
     } catch (error) {
       console.error('Error loading tasks:', error)
+      console.error('Error response:', error.response?.data)
     } finally {
       setLoading(false)
     }
@@ -86,6 +91,8 @@ const Tasks = () => {
     try {
       await tasksAPI.delete(id)
       loadTasks()
+      // Trigger dashboard refresh
+      window.dispatchEvent(new Event('dashboard-refresh'))
     } catch (error) {
       alert(error.response?.data?.error || 'Failed to delete task')
     }
@@ -95,6 +102,8 @@ const Tasks = () => {
     setShowModal(false)
     setEditingTask(null)
     loadTasks()
+    // Trigger dashboard refresh
+    window.dispatchEvent(new Event('dashboard-refresh'))
   }
 
   const getPriorityColor = (priority) => {

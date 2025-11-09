@@ -14,13 +14,13 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const { authenticate, authorize } = require('../middleware/auth');
-const { registerValidation, userIdValidation } = require('../middleware/validation');
+const { createUserValidation, userIdValidation } = require('../middleware/validation');
 
 // Apply authentication to all user routes
 router.use(authenticate);
 
 // Create user (Admin only)
-router.post('/', authorize('admin'), registerValidation, userController.createUser);
+router.post('/', authorize('admin'), createUserValidation, userController.createUser);
 
 // Get all users (Admin and Manager can see users for task assignment)
 router.get('/', authorize('admin', 'manager'), userController.getUsers);

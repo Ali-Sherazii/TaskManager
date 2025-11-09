@@ -28,7 +28,10 @@ const Login = () => {
     const result = await login(formData.username, formData.password)
     
     if (result.success) {
-      navigate('/dashboard')
+      // Clear any previous error messages
+      setError('')
+      // Navigate to dashboard
+      navigate('/dashboard', { replace: true })
     } else {
       setError(result.error)
       // Check if error is due to unverified email

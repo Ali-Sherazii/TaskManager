@@ -41,6 +41,9 @@ export const AuthProvider = ({ children }) => {
       setCookie('user', encodeURIComponent(JSON.stringify(user)), 7)
       setUser(user)
       
+      // Trigger dashboard refresh event for real-time updates
+      window.dispatchEvent(new Event('dashboard-refresh'))
+      
       return { success: true }
     } catch (error) {
       return {

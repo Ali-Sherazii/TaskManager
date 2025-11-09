@@ -89,6 +89,8 @@ const TaskModal = ({ task, users = [], onClose }) => {
         await tasksAPI.create(submitData)
       }
       
+      // Trigger dashboard refresh
+      window.dispatchEvent(new Event('dashboard-refresh'))
       onClose()
     } catch (error) {
       console.error('Task save error:', error)

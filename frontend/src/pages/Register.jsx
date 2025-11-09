@@ -57,7 +57,11 @@ const Register = () => {
     const result = await register(submitData)
     
     if (result.success) {
+      // Clear any previous errors
+      setError('')
+      // Navigate to login with success message
       navigate('/login', { 
+        replace: true,
         state: { 
           message: isAdminCreated 
             ? 'Account registration completed successfully! You can now log in.' 

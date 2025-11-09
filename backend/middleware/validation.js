@@ -86,6 +86,39 @@ const loginValidation = [
 ];
 
 /**
+ * Admin User Creation Validation
+ * 
+ * Validates:
+ * - Username: 3-30 chars, alphanumeric + underscore only
+ * - Email: Valid email format
+ * - Password: Optional (will be auto-generated if not provided)
+ * - Role: Optional, must be valid role
+ */
+const createUserValidation = [
+  body('username')
+    .trim()
+    .isLength({ min: 3, max: 30 })
+    .withMessage('Username must be between 3 and 30 characters')
+    .matches(/^[a-zA-Z0-9_]+$/)
+    .withMessage('Username can only contain letters, numbers, and underscores'),
+  body('email')
+    .trim()
+    .isEmail()
+    .withMessage('Invalid email format')
+    .normalizeEmail(),
+  body('password')
+    .optional()
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters long if provided'),
+  body('role')
+    .optional()
+    .toLowerCase()
+    .isIn(['admin', 'manager', 'user'])
+    .withMessage('Role must be admin, manager, or user'),
+  handleValidationErrors
+];
+
+/**
  * Task Creation Validation
  * 
  * Validates:
@@ -230,6 +263,7 @@ const userIdValidation = [
 module.exports = {
   registerValidation,
   loginValidation,
+  createUserValidation,
   createTaskValidation,
   updateTaskValidation,
   taskIdValidation,

@@ -101,7 +101,9 @@ const getTasks = async (req, res) => {
     if (priority) {
       query.priority = priority;
     }
-    if (assignedTo) {
+    // Only filter by assignedTo if a specific user ID is provided (not empty string)
+    // Empty string means "all users" for admin/manager
+    if (assignedTo && assignedTo.trim() !== '') {
       query.assignedTo = assignedTo;
     }
 
